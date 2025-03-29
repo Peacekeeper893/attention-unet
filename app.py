@@ -43,7 +43,6 @@ with st.container():
             # Read and decode the uploaded image using cv2
             image = cv2.imdecode(np.frombuffer(uploaded_image.read(), np.uint8), cv2.IMREAD_COLOR)
 
-            image_real = cv2.imread('new_data\\test\image\\01_test_0.png', cv2.IMREAD_COLOR)
 
             # Read and decode the uploaded mask
             mask_bytes = uploaded_mask.read()
@@ -64,8 +63,8 @@ with st.container():
 
     if example_button:
         # Load example image and mask
-        example_image_path = 'new_data\\test\image\\01_test_0.png'
-        example_mask_path = 'new_data\\test\mask\\01_test_0.png'
+        example_image_path = (r'new_data\test\image\01_test_0.png')
+        example_mask_path = r'new_data\test\mask\01_test_0.png'
 
         # Read and decode the example image using cv2
         example_image = cv2.imread(example_image_path, cv2.IMREAD_COLOR)
