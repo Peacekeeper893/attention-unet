@@ -37,6 +37,107 @@ def mask_parse(mask):
     mask = np.concatenate([mask, mask, mask], axis=-1)  ## (512, 512, 3)
     return mask
 
+def evaluate_single_image(image, mask):
+    """ Seeding """
+    seeding(42)
+
+    """ Hyperparameters """
+    H = 512
+    W = 512
+    size = (W, H)
+    checkpoint_path = "files/checkpoint.pth"
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    """ Load the checkpoint """
+
+    model = attention_unet()
+    model = model.to(device)
+    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
+    model.eval()
+
+
+    metrics_score = [0.0, 0.0, 0.0, 0.0, 0.0]
+    time_taken = []
+
+
+
+    """ Reading image """
+
+    x = np.transpose(image, (2, 0, 1))      ## (3, 512, 512)
+    x = x/255.0
+    x = np.expand_dims(x, axis=0)           ## (1, 3, 512, 512)
+    x = x.astype(np.float32)
+    x = torch.from_numpy(x)
+    x = x.to(device)
+
+    """ Reading mask """
+
+    y = np.expand_dims(mask, axis=0)            ## (1, 512, 512)
+    y = y/255.0
+    y = np.expand_dims(y, axis=0)               ## (1, 1, 512, 512)
+    y = y.astype(np.float32)
+    y = torch.from_numpy(y)
+    y = y.to(device)
+
+    
+
+    with torch.no_grad():
+        """ Prediction and Calculating FPS """
+        start_time = time.time()
+        pred_y = model(x)
+        pred_y = torch.sigmoid(pred_y)
+        total_time = time.time() - start_time
+        time_taken.append(total_time)
+
+
+        score = calculate_metrics(y, pred_y)
+        metrics_score = list(map(add, metrics_score, score))
+        pred_y = pred_y[0].cpu().numpy()        ## (1, 512, 512)
+        pred_y = np.squeeze(pred_y, axis=0)     ## (512, 512)
+        pred_y = pred_y > 0.5
+        pred_y = np.array(pred_y, dtype=np.uint8)
+
+    """ Saving masks """
+    ori_mask = mask_parse(mask)
+    pred_y = mask_parse(pred_y)
+    line = np.ones((size[1], 10, 3)) * 128
+
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  ## (512, 512, 3)
+
+    cat_images = np.concatenate(
+        [image, line, ori_mask, line, pred_y * 255], axis=1
+    )
+    cat_images = np.array(cat_images, dtype=np.uint8)
+
+
+
+
+    jaccard = metrics_score[0]
+    f1 = metrics_score[1]
+    recall = metrics_score[2]
+    precision = metrics_score[3]
+    acc = metrics_score[4]
+
+    return cat_images , image ,mask
+
+    # f = open("results/metrics.csv", "w")
+    # f.write("Jaccard, F1, Recall, Precision, Acc\n")
+    # f.write(f"{jaccard}, {f1}, {recall}, {precision}, {acc}")
+    # f.close()
+
+
+    # print(f"Jaccard: {jaccard:1.4f} - F1: {f1:1.4f} - Recall: {recall:1.4f} - Precision: {precision:1.4f} - Acc: {acc:1.4f}")
+
+    # fps = 1/np.mean(time_taken)
+    # print("FPS: ", fps)
+
+
+
+
+
+
+
+
 if __name__ == "__main__":
     """ Seeding """
     seeding(42)
