@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import cv2
+import os
 
 from evaluate import evaluate_single_image
 
@@ -63,14 +64,14 @@ with st.container():
 
     if example_button:
         # Load example image and mask
-        example_image_path = (r'new_data\test\image\01_test_0.png')
-        example_mask_path = r'new_data\test\mask\01_test_0.png'
+        image_path = os.path.join("new_data", "test", "image", "01_test_0.png")
+        mask_path = os.path.join("new_data", "test", "mask", "01_test_0.png")
 
         # Read and decode the example image using cv2
-        example_image = cv2.imread(example_image_path, cv2.IMREAD_COLOR)
+        example_image = cv2.imread(image_path, cv2.IMREAD_COLOR)
 
         # Read and decode the example mask
-        example_mask = cv2.imread(example_mask_path, cv2.IMREAD_GRAYSCALE)
+        example_mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
 
         if example_image is None or example_mask is None:
             st.error("Error loading example image or mask.")

@@ -62,6 +62,13 @@ def evaluate_single_image(image, mask):
 
     """ Reading image """
 
+    if image is None:
+        raise ValueError("Error: Image not loaded. Check the file path.")
+    elif len(image.shape) == 2:  # Grayscale image
+        image = np.stack([image] * 3, axis=-1)  # Convert grayscale to RGB
+    elif image.shape[-1] != 3:
+        raise ValueError(f"Unexpected image shape: {image.shape}")
+
     x = np.transpose(image, (2, 0, 1))      ## (3, 512, 512)
     x = x/255.0
     x = np.expand_dims(x, axis=0)           ## (1, 3, 512, 512)
